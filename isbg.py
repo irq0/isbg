@@ -11,7 +11,7 @@
 # You may use isbg under any OSI approved open source license
 # such as those listed at http://opensource.org/licenses/alphabetical
 
-version="0.99"
+version="0.99-irq0"
 
 from subprocess import Popen, PIPE
 
@@ -25,6 +25,9 @@ import string
 import socket
 import time
 import atexit
+import re
+import commands
+
 
 try:
   from hashlib import md5
@@ -41,6 +44,7 @@ imaphost='localhost'
 imapport=0 # autodetect - 143 for standard connection, 993 for imaps
 usessl=0
 imappassword=None
+imap_use_keychain=False
 imapinbox="INBOX"
 spaminbox="INBOX.spam"
 teachonly=0
@@ -121,6 +125,7 @@ All options are optional (\o/), default are between brackets
   --imapuser username   Who you login as [%s]
   --imapinbox mbox      Name of your inbox folder [%s]
   --spaminbox mbox      Name of your spam folder [%s]
+  --imap-use-keychain   Fetch password from OSX keychain. Looks for an account password with key "imaphost"
   --teachonly           Don't search spam, just learn from folders
   --learnspambox mbox   Name of your learn spam folder [%s]
   --learnhambox mbox    Name of your learn ham folder [%s]
@@ -147,6 +152,17 @@ All options are optional (\o/), default are between brackets
 
 See http://redmine.ookook.fr/projects/isbg/wiki for more details\n""" % (version, imaphost, sslmsg, imapuser, imapinbox, spaminbox, learnspambox, learnhambox, movehamto, thresholdsize))
     sys.exit(ec)
+
+def get_keychain_pass(server=None):
+        params = {
+                'security': '/usr/bin/security',
+                'command':  'find-internet-password',
+                'server':   server,
+                }
+
+        command = "%(security)s %(command)s -g -s %(server)s" % params
+        outtext = commands.getoutput(command)
+        return re.match(r'password: "(.*)"', outtext).group(1)
 
 def errorexit(msg, exitcode=exitcodeflags):
     sys.stderr.write(msg)
@@ -184,7 +200,7 @@ def dehexof(x):
 longopts=[ "imaphost=", "imapuser=", "imapinbox=", "spaminbox=",
        "maxsize=", "noreport", "flag", "delete", "deletehigherthen=",
        "expunge", "verbose", "trackfile=", "spamc", "ssl", "savepw",
-       "nostats", "exitcodes", "learnhambox=", "movehamto=",
+       "nostats", "exitcodes", "learnhambox=", "movehamto=", "imap-use-keychain",
        "learnspambox=", "teachonly", "learnthendestroy", "noninteractive",
        "ignorelockfile",
        # options not mentioned in usage
@@ -258,6 +274,8 @@ for p in opts:
         ignorelockfile=1
     elif p[0]=="--lockfilegraceminutes":
         lockfilegraceminutes = int(p[1])
+    elif p[0]=="--imap-use-keychain":
+        imap_use_keychain=True
     else:
         locals()[p[0][2:]]=p[1]
 
@@ -349,13 +367,15 @@ else:
 
 # Figure out the password
 if imappassword is None:
-    if not savepw and os.path.exists(passwordfilename):
+    if imap_use_keychain:
+        imappassword=get_keychain_pass(imaphost)
+    elif not savepw and os.path.exists(passwordfilename):
         try:
             imappassword=getpw(dehexof(open(passwordfilename, "rb").read()), passwordhash)
             if verbose: print "Successfully read password file"
         except:
             pass
-        
+
     # do we have to prompt?
     if imappassword is None:
         if not interactive:

@@ -2,18 +2,14 @@
 # -*- coding: utf-8 -*-
 # UTF-8? ✓
 
-# Original idea and basis for this was "isbg.py".
-# Original header:
-# This Python program scans an IMAP Inbox and runs every
-# entry against SpamAssassin. For any entries that match,
-# the message is copied to another folder, and the original
-# marked or deleted.
+"""
+Scan mails in an IMAP inbox using Spamassassin.
+Move a message to a special folder if SA flags it as spam.
+"""
 
-# This software was mainly written Roger Binns
-# <rogerb@rogerbinns.com> and maintained by Thomas Lecavelier
-# <thomas@lecavelier.name> since novembre 2009.
-# You may use isbg under any OSI approved open source license
-# such as those listed at http://opensource.org/licenses/alphabetical
+# Basically a rewrite with parallel spamassassin execution
+# of IMAP Spam Begon (isbg) https://github.com/isbg/isbg
+# by Roger Binns an Thomas Lecavelier et. al.
 
 import imaplib
 import sys
@@ -52,7 +48,8 @@ def parse_args(args):
     p.add_argument("--imaphost", help="IMAP server address")
     p.add_argument("--imapuser", help="IMAP username")
     p.add_argument("--imapport", default="imap",
-                   help="IMAP server port (default: imap or imaps with --use-ssl)")
+                   help="IMAP server port "
+                   "(default: imap or imaps with --use-ssl)")
     p.add_argument("--imapinbox", default="IMAP",
                    help="IMAP mailbox to filter")
     p.add_argument("--spaminbox", default="SPAM",

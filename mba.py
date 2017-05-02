@@ -84,12 +84,15 @@ def parse_args(args):
 
     r = p.parse_args(args)
 
+    if not r.imaphost or not r.imapuser:
+        raise Exception("--imaphost and --imapuser are mandatory")
+
     r.imappassword = get_keyring_pass(r.imaphost)
     if not r.imappassword:
         log.error("Failed to get password from keyring")
         log.info("To add password to keyring do: "
                  "python -c 'import keyring; "
-                 "keyring.set_password(\"isbg-ng\", SERVERNAME, PASSWORD)'")
+                 "keyring.set_password(\"mba\", SERVERNAME, PASSWORD)'")
         sys.exit(1)
 
     if r.use_ssl:
@@ -443,7 +446,8 @@ def main(argv):
     except ValueError as e:
         log.error("Error in arguments / keyring credentials: %s", e.args[0])
         sys.exit(1)
-    except:
+    except Exception as e:
+        log.error(e.args[0])
         sys.exit(1)
 
     try:

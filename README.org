@@ -1,0 +1,56 @@
+#+TITLE: mba - MailBoxAssassin
+
+Scan IMAP mailbox, run Spamassassin on each mail. Move spam to a SPAM
+folder. Repeat.
+
+* Usage
+You can run mba in two modes:
+- Continuous
+- Once
+
+Example call:
+
+#+BEGIN_SRC bash
+python3 mba.py \
+	--imaphost IMAP_HOSTNAME \
+	--imapuser IMAP_USERNAME \
+	--spaminbox SPAM \
+	--imapinbox INBOX  \
+	--verbose \
+	--use-tls \
+	--continuous
+#+END_SRC
+
+Connect to IMAP_HOSTNAME with TLS enabled as IMAP_USERNAME and feed mails in INBOX to
+spamassassin. If they are flagged as SPAM (X-Spam-Flag: YES) move them
+to the mailbox SPAM. Run in continuous mode with verbose messages.
+
+** Keyring
+Mba uses keyring to retrieve the password for IMAP_HOSTNAME and
+IMAP_USERNAME.
+
+To set the password:
+
+#+BEGIN_SRC bash
+python -c 'import keyring; keyring.set_password(\"mba\", \"SERVERNAME\", \"PASSWORD\")'
+#+END_SRC
+
+* Spamassassin
+Mba assumes that you have a Spamassassin already set up. The most
+important setting is the score at which Spamassassin flags a message as Spam.
+
+* Idea / History
+Mba started out as my personal local fork of [[https://github.com/isbg/isbg]].
+I couldn't plug Spamassassin into my mail server, so the approach was
+just right. My only problem was, that I didn't want to store my
+credentials on the server in a too insecure way. I added python's
+keychain module to store the credentials and ran it happily for quite a while.
+Due to a server upgrade I now had multiple, but quite slow cores and
+the script didn't really kept up with filtering my mail in a timely
+fashion. One afternoon I decided to parallelize the Spamassassin step
+and in the process rewrote most of the script, as well as threw out
+all the features that I never used.
+More time passed and I was looking for code on which I could practice a python3
+conversion. More changes and better error handling later I checked
+git blame and, well, no original code from isbg was left. I thought, I
+might as well rename it to avoid confusion.

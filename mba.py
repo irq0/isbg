@@ -39,7 +39,7 @@ log.addHandler(console)
 
 
 def get_keyring_pass(server=None):
-    return keyring.get_password("isbg-ng", server)
+    return keyring.get_password("mba", server)
 
 
 def parse_args(args):
